@@ -32,7 +32,7 @@ class AuthController extends Controller
     public function logout()
     {
         Auth::logout();
-        return redirect()->route('/logout')->with('success', 'Desconectado com sucesso!');
+        return redirect()->route('login')->with('success', 'Desconectado com sucesso!');
     }
 
     public function showRegister()
