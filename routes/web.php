@@ -5,7 +5,7 @@ use App\Http\Controllers\TarefaController;
 use App\Http\Controllers\AuthController;
 
 Route::get('/', function () {
-    return view('auth.login');
+    return redirect()->route('login');
 });
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
