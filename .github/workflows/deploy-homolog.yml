@@ -17,6 +17,9 @@ jobs:
       - name: Aguardar containers iniciarem
         run: sleep 20
 
+      - name: Instalar dependências
+        run: docker exec laravel-app-homolog composer install
+
       - name: Copiar .env.homolog para .env dentro do container
         run: docker exec laravel-app-homolog cp .env.homolog .env
 
