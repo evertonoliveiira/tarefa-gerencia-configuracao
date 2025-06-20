@@ -33,3 +33,13 @@ jobs:
         run: |
           docker exec laravel-app-homolog php artisan test || true
           echo "Testes finalizados"
+      
+      - name: Fazer merge automático da develop para homolog
+        if: success()
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git fetch origin
+          git checkout homolog
+          git merge origin/develop --no-ff -m "Merge automático da develop para homolog via CI"
+          git push origin homolog
