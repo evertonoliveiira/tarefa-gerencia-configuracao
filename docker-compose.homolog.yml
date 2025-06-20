@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres-db-homolog
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: homolog_db
+      POSTGRES_USER: tarefa_user
+      POSTGRES_PASSWORD: senha123
+    volumes:
+      - pgdata_homolog:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-app-homolog
+    depends_on:
+      - db
+    ports:
+      - "8081:80"
+    volumes:
+      - .:/var/www/html
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html/public
+
+volumes:
+  pgdata_homolog:
