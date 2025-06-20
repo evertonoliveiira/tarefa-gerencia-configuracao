@@ -41,5 +41,5 @@ jobs:
           git config --global user.email "actions@github.com"
           git fetch origin
           git checkout homolog
-          git merge origin/develop --no-ff -m "Merge automático da develop para homolog via CI"
+          git merge origin/develop --no-ff --allow-unrelated-histories -m "Merge automático da develop para homolog via CI"
           git push origin homolog
