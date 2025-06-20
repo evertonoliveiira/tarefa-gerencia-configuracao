@@ -24,6 +24,15 @@ jobs:
       - name: Instalar dependências
         run: composer install --no-progress --prefer-dist
 
+      - name: Copiar .env de homolog
+        run: cp .env.homolog .env
+
+      - name: Gerar chave da aplicação
+        run: php artisan key:generate
+
+      - name: Criar estrutura do banco
+        run: php artisan migrate --seed
+
       - name: Rodar testes
         run: php artisan test
 
