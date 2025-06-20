@@ -18,7 +18,7 @@ jobs:
         run: sleep 20
 
       - name: Instalar dependências
-        run: docker exec laravel-app-homolog composer install
+        run: docker exec laravel-app-homolog composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Copiar .env.homolog para .env dentro do container
         run: docker exec laravel-app-homolog cp .env.homolog .env
@@ -27,13 +27,13 @@ jobs:
         run: docker exec laravel-app-homolog php artisan key:generate
 
       - name: Executar migrations e seeders
-        run: docker exec laravel-app-homolog php artisan migrate --seed
+        run: docker exec laravel-app-homolog php artisan migrate --seed --force
 
-      - name: Rodar testes
+      - name: Rodar testes (sem falhar o job)
         run: |
           docker exec laravel-app-homolog php artisan test || true
           echo "Testes finalizados"
-      
+
       - name: Fazer merge automático da develop para homolog
         if: success()
         run: |
@@ -41,5 +41,5 @@ jobs:
           git config --global user.email "actions@github.com"
           git fetch origin
           git checkout homolog
-          git merge origin/develop --no-ff -m "Merge automático da develop para homolog via CI"
+          git merge origin/develop --allow-unrelated-histories --no-ff -m "Merge automático da develop para homolog via CI"
           git push origin homolog
