@@ -29,5 +29,8 @@ jobs:
       - name: Executar migrations e seeders
         run: docker exec laravel-app-homolog php artisan migrate --seed
 
-      - name: Rodar os testes automatizados
-        run: docker exec laravel-app-homolog php artisan test
+      - name: Rodar testes
+        run: |
+          docker exec laravel-app-homolog php artisan test || TEST_EXIT_CODE=$?
+          echo "Testes finalizados"
+          exit ${TEST_EXIT_CODE:-0}
