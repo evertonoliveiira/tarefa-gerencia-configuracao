@@ -40,6 +40,8 @@ jobs:
           TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
         run: |
           echo "Verificando se o token está sendo usado corretamente"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
           git remote set-url origin https://x-access-token:${TOKEN}@github.com/evertonoliveiira/tarefa-gerencia-configuracao.git
           git fetch origin
           git checkout homolog
