@@ -18,7 +18,7 @@ jobs:
 
       - name: Executar deploy em homolog
         run: |
-          echo "🚧 Iniciando deploy de homologação"
+          echo "Iniciando deploy de homologação"
           ssh -o StrictHostKeyChecking=no univates@177.44.248.81 \
             "cd /home/univates/homolog && chmod +x ./deploy.sh && ./deploy.sh"
-          echo "✅ Deploy homologação concluído"
+          echo "Deploy homologação concluído"
