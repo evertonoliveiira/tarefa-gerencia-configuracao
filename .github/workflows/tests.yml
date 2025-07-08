@@ -1,0 +1,54 @@
+name: 🧪 Testes Laravel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: tarefa_user
+          POSTGRES_PASSWORD: senha123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tarefa_user -d test_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_pgsql, pgsql, zip
+          ini-values: post_max_size=256M, max_execution_time=180
+
+      - name: Instalar dependências
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Configurar ambiente de teste
+        run: |
+          cp .env.example .env.testing
+          php artisan key:generate --env=testing --force
+          php artisan env:set DB_CONNECTION pgsql --env=testing
+          php artisan env:set DB_HOST localhost --env=testing
+          php artisan env:set DB_PORT 5432 --env=testing
+          php artisan env:set DB_DATABASE test_db --env=testing
+          php artisan env:set DB_USERNAME tarefa_user --env=testing
+          php artisan env:set DB_PASSWORD senha123 --env=testing
+
+      - name: Executar migrations
+        run: php artisan migrate --env=testing --force
+
+      - name: Executar testes
+        run: vendor/bin/phpunit --testsuite=Feature --verbose
