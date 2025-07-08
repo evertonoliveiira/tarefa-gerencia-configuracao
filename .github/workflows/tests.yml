@@ -1,4 +1,4 @@
-name: 🧪 Testes Laravel
+name: Testes Laravel
 
 on:
   workflow_dispatch:
