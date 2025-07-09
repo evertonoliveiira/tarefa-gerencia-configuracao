@@ -81,6 +81,10 @@ sudo docker exec "$CONTAINER_ID" bash -lc \
      npm install --prefix /var/www/html && npm run build --prefix /var/www/html; \
    fi"
 
+echo "Sincronizando .env..."
+sudo docker exec "$CONTAINER_ID" bash -lc \
+  "cp /var/www/html/$ENV_FILE /var/www/html/.env"
+
 echo "Executando migrations e cache..."
 sudo docker exec "$CONTAINER_ID" bash -lc \
   "php artisan migrate --force && \
