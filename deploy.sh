@@ -14,7 +14,7 @@ case "$BRANCH" in
     ;;
   main)
     COMPOSE_FILE="docker-compose.yml"
-    ENV_FILE=".env.example"
+    ENV_FILE=".env.prod"
     ;;
   *)
     echo "Este script só roda nas branches homolog ou main."
@@ -81,14 +81,21 @@ sudo docker exec "$CONTAINER_ID" bash -lc \
      npm install --prefix /var/www/html && npm run build --prefix /var/www/html; \
    fi"
 
-echo "Sincronizando .env..."
-sudo docker exec "$CONTAINER_ID" bash -lc \
-  "cp /var/www/html/$ENV_FILE /var/www/html/.env"
+echo "Sincronizando .env (via docker cp)…"
+# copia direto do host para o container, evita arquivos residuais
+docker cp "$ENV_FILE" "$CONTAINER_ID":/var/www/html/.env
 
-echo "Executando migrations e cache..."
-sudo docker exec "$CONTAINER_ID" bash -lc \
-  "php artisan migrate --force && \
-   php artisan config:cache && \
-   php artisan route:cache"
+echo "Gerando APP_KEY (se faltar) e limpando cache…"
+sudo docker exec "$CONTAINER_ID" bash -lc "\
+  php artisan key:generate --force && \
+  php artisan config:clear && \
+  echo '⬇️  Verificação rápida do .env:' && \
+  grep -E '^(APP_ENV|APP_KEY|DB_HOST|DB_DATABASE)' /var/www/html/.env
+"
 
-echo "✅ Deploy concluído para $BRANCH"
+echo "Executando migrations e cache…"
+sudo docker exec "$CONTAINER_ID" bash -lc "\
+  php artisan migrate --force && \
+  php artisan config:cache && \
+  php artisan route:cache
+"
