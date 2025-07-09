@@ -1,72 +1,90 @@
 #!/usr/bin/env bash
 set -e
 
-#Identifica a branch atual
+# ────────────────────────────────────────────────────────────────
+# Identifica a branch atual e seleciona docker-compose + .env
+# ────────────────────────────────────────────────────────────────
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "Deploy na branch: $BRANCH"
 
-#Define compose e env conforme branch
-if [ "$BRANCH" = "homolog" ]; then
-  COMPOSE_FILE="docker-compose.homolog.yml"
-  ENV_FILE=".env.homolog"
-elif [ "$BRANCH" = "main" ]; then
-  COMPOSE_FILE="docker-compose.yml"
-  ENV_FILE=".env.prod"
-else
-  echo "Este script só roda em homolog ou main."
-  exit 1
-fi
+case "$BRANCH" in
+  homolog)
+    COMPOSE_FILE="docker-compose.homolog.yml"
+    ENV_FILE=".env.homolog"
+    ;;
+  main)
+    COMPOSE_FILE="docker-compose.yml"
+    ENV_FILE=".env.prod"
+    ;;
+  *)
+    echo "Este script só roda nas branches homolog ou main."
+    exit 1
+    ;;
+esac
 
-#Atualiza código
+# ────────────────────────────────────────────────────────────────
+# Atualiza código
+# ────────────────────────────────────────────────────────────────
 echo "Atualizando código..."
-git fetch origin $BRANCH
-git reset --hard origin/$BRANCH
+git fetch origin "$BRANCH"
+git reset --hard "origin/$BRANCH"
 
+# ────────────────────────────────────────────────────────────────
+# Reinicia containers
+# ────────────────────────────────────────────────────────────────
 echo "Limpando containers antigos (se existirem)…"
-docker-compose -f $COMPOSE_FILE --env-file $ENV_FILE down -v || true
+docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down -v || true
 
-#Build & up dos containers (com sudo, se precisar)
 echo "Iniciando containers..."
-sudo docker-compose -f $COMPOSE_FILE --env-file $ENV_FILE up -d --build
+sudo docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --build
 
-#Captura ID do container ‘app’
-CONTAINER_ID=$(sudo docker-compose -f $COMPOSE_FILE ps -q app)
+# ────────────────────────────────────────────────────────────────
+# Container da aplicação
+# ────────────────────────────────────────────────────────────────
+CONTAINER_ID=$(sudo docker-compose -f "$COMPOSE_FILE" ps -q app)
 echo "Container app: $CONTAINER_ID"
 
-#Ajusta permissões
-echo "Ajustando permissões..."
-sudo docker exec $CONTAINER_ID bash -lc "\
-  chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
-  chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache"
-
-#Instala dependências PHP se faltar
-echo "Instalando dependências PHP (se necessário)..."
-sudo docker exec $CONTAINER_ID bash -lc "\
-  if [ ! -d '/var/www/html/vendor' ]; then \
-    composer install --no-interaction --prefer-dist --optimize-autoloader; \
-  fi"
-
-#Gera assets Vite se faltar
-echo "Gerando assets (Vite) (se necessário)..."
-sudo docker exec $CONTAINER_ID bash -lc "\
-  if [ ! -f '/var/www/html/public/build/manifest.json' ]; then \
-    npm install --prefix /var/www/html && npm run build --prefix /var/www/html; \
-  fi"
-
-#Aguarda o DB
+# ────────────────────────────────────────────────────────────────
+# Aguarda PostgreSQL
+# ────────────────────────────────────────────────────────────────
 echo "Aguardando PostgreSQL ficar disponível..."
-sudo docker exec $CONTAINER_ID bash -lc "\
-  timeout=120 elapsed=0; \
-  until pg_isready -h \"\$DB_HOST\" -p \"\$DB_PORT\" > /dev/null 2>&1 || [ \$elapsed -ge \$timeout ]; do \
-    sleep 3; elapsed=\$((elapsed+3)); echo \"  ➤ Esperando conexão com \$DB_HOST:\$DB_PORT... (\$elapsed s)\"; \
-  done; \
-  [ \$elapsed -lt \$timeout ] || { echo 'Timeout ao conectar com PostgreSQL'; exit 1; }"
+sudo docker exec "$CONTAINER_ID" bash -lc '
+timeout=120
+elapsed=0
+while ! pg_isready -h db -p 5432 >/dev/null 2>&1; do
+  if [ $elapsed -ge $timeout ]; then
+    echo "Timeout ao conectar com PostgreSQL"; exit 1
+  fi
+  sleep 3; elapsed=$((elapsed+3))
+  echo "  ➤ Esperando conexão com db:5432... ($elapsed s)"
+done
+echo "PostgreSQL disponível."
+'
 
-#Roda migrations e gera cache/routes
+# ────────────────────────────────────────────────────────────────
+# Passos dentro do container da aplicação
+# ────────────────────────────────────────────────────────────────
+echo "Ajustando permissões..."
+sudo docker exec "$CONTAINER_ID" bash -lc \
+  "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+   chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache"
+
+echo "Instalando dependências PHP (se necessário)..."
+sudo docker exec "$CONTAINER_ID" bash -lc \
+  "if [ ! -d '/var/www/html/vendor' ]; then \
+     composer install --no-interaction --prefer-dist --optimize-autoloader; \
+   fi"
+
+echo "Gerando assets (Vite) (se necessário)..."
+sudo docker exec "$CONTAINER_ID" bash -lc \
+  "if [ ! -f '/var/www/html/public/build/manifest.json' ]; then \
+     npm install --prefix /var/www/html && npm run build --prefix /var/www/html; \
+   fi"
+
 echo "Executando migrations e cache..."
-sudo docker exec $CONTAINER_ID bash -lc "\
-  php artisan migrate --force && \
-  php artisan config:cache && \
-  php artisan route:cache"
+sudo docker exec "$CONTAINER_ID" bash -lc \
+  "php artisan migrate --force && \
+   php artisan config:cache && \
+   php artisan route:cache"
 
-echo "Deploy concluído para $BRANCH"
+echo "✅ Deploy concluído para $BRANCH"
