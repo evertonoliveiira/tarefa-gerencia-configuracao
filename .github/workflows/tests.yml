@@ -56,5 +56,12 @@ jobs:
       - name: Executar migrations
         run: php artisan migrate --force
 
-      - name: Executar testes
-        run: php artisan test
+      - name: Run PHPUnit
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST:     localhost
+          DB_PORT:     5432
+          DB_DATABASE: test_db
+          DB_USERNAME: tarefa_user
+          DB_PASSWORD: senha123
+        run: vendor/bin/phpunit --testsuite=Feature --verbose
