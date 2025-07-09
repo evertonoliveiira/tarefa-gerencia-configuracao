@@ -1,7 +1,9 @@
 name: Deploy Homolog
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - homolog
 
 jobs:
   deploy-homolog:
