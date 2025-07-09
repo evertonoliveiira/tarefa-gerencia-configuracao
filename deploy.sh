@@ -56,11 +56,11 @@ sudo docker exec $CONTAINER_ID bash -lc "\
 #Aguarda o DB
 echo "Aguardando PostgreSQL ficar disponível..."
 sudo docker exec $CONTAINER_ID bash -lc "\
-  timeout=60 elapsed=0; \
+  timeout=120 elapsed=0; \
   until pg_isready -h \"\$DB_HOST\" -p \"\$DB_PORT\" > /dev/null 2>&1 || [ \$elapsed -ge \$timeout ]; do \
-    sleep 3; elapsed=\$((elapsed+3)); echo \"  ➤ Esperando... (\$elapsed s)\"; \
+    sleep 3; elapsed=\$((elapsed+3)); echo \"  ➤ Esperando conexão com \$DB_HOST:\$DB_PORT... (\$elapsed s)\"; \
   done; \
-  [ \$elapsed -lt \$timeout ] || { echo 'Timeout no DB'; exit 1; }"
+  [ \$elapsed -lt \$timeout ] || { echo 'Timeout ao conectar com PostgreSQL'; exit 1; }"
 
 #Roda migrations e gera cache/routes
 echo "Executando migrations e cache..."
