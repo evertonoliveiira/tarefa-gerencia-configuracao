@@ -14,7 +14,7 @@ case "$BRANCH" in
     ;;
   main)
     COMPOSE_FILE="docker-compose.yml"
-    ENV_FILE=".env.prod"
+    ENV_FILE=".env.example"
     ;;
   *)
     echo "Este script só roda nas branches homolog ou main."
