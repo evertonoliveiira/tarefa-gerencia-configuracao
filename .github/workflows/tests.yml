@@ -1,7 +1,6 @@
 name: Testes Laravel
 
 on:
-  workflow_dispatch:
   pull_request:
     branches:
       - homolog
@@ -25,6 +24,15 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      # essas VARS vão sobrescrever o .env na hora de rodar artisan
+      DB_CONNECTION: pgsql
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_DATABASE: test_db
+      DB_USERNAME: tarefa_user
+      DB_PASSWORD: senha123
+
     steps:
       - name: Checkout do código
         uses: actions/checkout@v3
@@ -39,19 +47,14 @@ jobs:
       - name: Instalar dependências
         run: composer install --no-interaction --prefer-dist
 
-      - name: Configurar ambiente de teste
-        run: |
-          cp .env.example .env.testing
-          php artisan key:generate --env=testing --force
-          php artisan env:set DB_CONNECTION pgsql --env=testing
-          php artisan env:set DB_HOST localhost --env=testing
-          php artisan env:set DB_PORT 5432 --env=testing
-          php artisan env:set DB_DATABASE test_db --env=testing
-          php artisan env:set DB_USERNAME tarefa_user --env=testing
-          php artisan env:set DB_PASSWORD senha123 --env=testing
+      - name: Copiar .env
+        run: cp .env.example .env
+
+      - name: Gerar APP_KEY
+        run: php artisan key:generate --force
 
       - name: Executar migrations
-        run: php artisan migrate --env=testing --force
+        run: php artisan migrate --force
 
       - name: Executar testes
-        run: vendor/bin/phpunit --testsuite=Feature --verbose
+        run: php artisan test --parallel
