@@ -64,4 +64,4 @@ jobs:
           DB_DATABASE: test_db
           DB_USERNAME: tarefa_user
           DB_PASSWORD: senha123
-        run: vendor/bin/phpunit --testsuite=Feature --verbose
+        run: php artisan test
