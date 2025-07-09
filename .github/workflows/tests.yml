@@ -57,4 +57,4 @@ jobs:
         run: php artisan migrate --force
 
       - name: Executar testes
-        run: php artisan test --parallel
+        run: php artisan test
