@@ -51,7 +51,7 @@ echo "Aguardando PostgreSQL ficar disponível..."
 sudo docker exec "$CONTAINER_ID" bash -lc '
 timeout=120
 elapsed=0
-while ! pg_isready -h db -p 5432 >/dev/null 2>&1; do
+while ! (echo > /dev/tcp/db/5432) 2>/dev/null; do
   if [ $elapsed -ge $timeout ]; then
     echo "Timeout ao conectar com PostgreSQL"; exit 1
   fi
