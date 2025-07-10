@@ -67,7 +67,6 @@ echo "PostgreSQL disponível."
 echo "Ajustando permissões..."
 sudo docker exec "$CONTAINER_ID" bash -lc \
    "chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache"
-  # "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
 
 echo "Instalando dependências PHP (se necessário)..."
 sudo docker exec "$CONTAINER_ID" bash -lc \
