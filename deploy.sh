@@ -81,16 +81,19 @@ sudo docker exec "$CONTAINER_ID" bash -lc \
    fi"
 
 echo "Sincronizando .env (via docker cp)…"
-# copia direto do host para o container, evita arquivos residuais
 docker cp "$ENV_FILE" "$CONTAINER_ID":/var/www/html/.env
 
-echo "Gerando APP_KEY (se faltar) e limpando cache…"
-sudo docker exec "$CONTAINER_ID" bash -lc "\
-  php artisan key:generate --force && \
-  php artisan config:clear && \
-  echo '⬇️  Verificação rápida do .env:' && \
-  grep -E '^(APP_ENV|APP_KEY|DB_HOST|DB_DATABASE)' /var/www/html/.env
-"
+echo "Limpando cache antes de gerar key…"
+sudo docker exec "$CONTAINER_ID" bash -lc "php artisan config:clear"
+
+echo "Gerando APP_KEY (se faltar)…"
+sudo docker exec "$CONTAINER_ID" bash -lc "php artisan key:generate --force"
+
+echo "⬇️  Verificação rápida do .env:"
+sudo docker exec "$CONTAINER_ID" bash -lc "grep -E '^(APP_ENV|APP_KEY|DB_HOST|DB_DATABASE)' /var/www/html/.env"
+
+echo "Limpando cache após gerar key…"
+sudo docker exec "$CONTAINER_ID" bash -lc "php artisan config:clear"
 
 echo "Executando migrations e cache…"
 sudo docker exec "$CONTAINER_ID" bash -lc "\
