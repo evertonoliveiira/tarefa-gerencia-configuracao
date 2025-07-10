@@ -26,7 +26,6 @@ COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
 COPY . /var/www/html
 
 # Ajusta permissões para o Laravel
-RUN chown -R www-data:www-data /var/www/html \
-  && chmod -R 755 /var/www/html/storage
+RUN chmod -R 755 /var/www/html/storage
 
 EXPOSE 80
