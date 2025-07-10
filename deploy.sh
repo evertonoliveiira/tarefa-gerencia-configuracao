@@ -33,7 +33,7 @@ git reset --hard "origin/$BRANCH"
 # Reinicia containers
 # ────────────────────────────────────────────────────────────────
 echo "Limpando containers antigos (se existirem)…"
-docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down -v || true
+docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down || true
 
 echo "Iniciando containers..."
 sudo docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --build
